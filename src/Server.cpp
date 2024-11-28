@@ -54,6 +54,8 @@ int main(int argc, char **argv) {
   
   accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
+
+  std::cout << "+PONG\r\n"
   
   close(server_fd);
 
