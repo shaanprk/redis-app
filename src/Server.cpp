@@ -54,7 +54,8 @@ int main(int argc, char **argv) {
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
 
-  while (listen(server_fd, connection_backlog) != 0) {
+  char buffer[1024] = {0};
+  while (recv(client_fd, buffer, sizeof(buffer), 0)) {
     send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
   }
   
