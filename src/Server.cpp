@@ -8,6 +8,15 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+void handle_client(int client_id) {
+  std::string response = "+PONG\r\n";
+  char buffer[1024] = {0};
+  while (recv(client_fd, buffer, sizeof(buffer), 0)) {
+    // Send PONG response 
+    send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
+  }
+}
+
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
@@ -48,14 +57,22 @@ int main(int argc, char **argv) {
   std::cout << "Waiting for a client to connect...\n";
 
   // You can use print statements as follows for debugging, they'll be visible when running tests.
-  std::cout << "Logs from your program will appear here!\n";
+  // std::cout << "Logs from your program will appear here!\n";
 
-  // Uncomment this block to pass the first stage
-  int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  std::cout << "Client connected\n";
+  while (true) {
+    int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+    std::cout << "Client connected\n";
+    std::thread new_client(handle_client, client_fd);
+    nw.detach();
+  }
+  // // Uncomment this block to pass the first stage
+  // int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+  // std::cout << "Client connected\n";
 
+  // Respond to multiple PING commands
   char buffer[1024] = {0};
   while (recv(client_fd, buffer, sizeof(buffer), 0)) {
+    // Send PONG response 
     send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
   }
   
