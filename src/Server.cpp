@@ -51,11 +51,11 @@ int main(int argc, char **argv) {
   std::cout << "Logs from your program will appear here!\n";
 
   // Uncomment this block to pass the first stage
-  
   accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
 
-  std::cout << "+PONG\r\n";
+  // std::cin << "Enter a command: ";
+  return "+PONG\r\n";
   
   close(server_fd);
 
