@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
   accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   std::cout << "Client connected\n";
 
-  // std::cin << "Enter a command: ";
-  return "+PONG\r\n";
+  string pong = "+PONG\r\n";
+  send(server_fd, pong, strlen(pong), 0);
   
   close(server_fd);
 
