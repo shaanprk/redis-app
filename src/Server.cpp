@@ -58,7 +58,7 @@ void handle_client(int client_fd) {
 
     // Handle recognized commands
     if (command == "ECHO") {
-      std::string response = "+" + argument + "\r\n";
+      std::string response = "+" + arguments[1] + "\r\n";
       send(client_fd, response.c_str(), response.size(), 0);
     } else if (command == "PING") {
       send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
