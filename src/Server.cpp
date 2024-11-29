@@ -27,37 +27,32 @@ void handle_client(int client_fd) {
     std::string input(buffer);
     
     size_t pos = 0;
-    std::string token;
     std::string command;
-    std::string argument;
+    std::vector<std::string> arguments;
+
+    // Parse number of arguments
     if (input[pos] == '*') {
       pos = input.find("\r\n", pos);
       if (pos == std::string::npos) break;
       pos += 2;
     }
 
-    // Parse command (e.g., "$4\r\nLLEN")
-    if (input[pos] == '$') {
+    // Parse commands and arguments
+    while (pos < input.size() && input[pos] == '$') {
+      // Skip the "$<len>\r\n" part
       pos = input.find("\r\n", pos);
       if (pos == std::string::npos) break; // Malformed input
       pos += 2; // Skip "\r\n"
+
+      // Extract the next token
       size_t next_pos = input.find("\r\n", pos);
       if (next_pos == std::string::npos) break; // Malformed input
-      command = input.substr(pos, next_pos - pos);
+      arguments.push_back(input.substr(pos, next_pos - pos));
       pos = next_pos + 2; // Skip "\r\n"
     }
 
-    // Parse argument (e.g., "$6\r\nmylist")
-    if (input[pos] == '$') {
-      pos = input.find("\r\n", pos);
-      if (pos == std::string::npos) break; // Malformed input
-      pos += 2; // Skip "\r\n"
-      size_t next_pos = input.find("\r\n", pos);
-      if (next_pos == std::string::npos) break; // Malformed input
-      argument = input.substr(pos, next_pos - pos);
-    }
-
     // Convert command to uppercase for case-insensitive matching
+    command = arguments[0];
     std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) { return std::toupper(c); });
 
     // Handle recognized commands
@@ -66,7 +61,10 @@ void handle_client(int client_fd) {
       send(client_fd, response.c_str(), response.size(), 0);
     } else if (command == "PING") {
       send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
-    } else {
+    } else if (command == "SET") {
+      
+    }
+    else {
       std::string response = "-ERR unknown command\r\n";
       send(client_fd, response.c_str(), response.size(), 0);
     }
