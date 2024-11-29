@@ -12,7 +12,11 @@
 void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
   char buffer[1024] = {0};
-  while (recv(client_fd, buffer, sizeof(buffer), 0)) {
+  while (true) {
+    int test = recv(client_fd, buffer, sizeof(buffer), 0)
+    if (test == 1) {
+      break;
+    }
     // Send PONG response 
     send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
   }
@@ -66,16 +70,6 @@ int main(int argc, char **argv) {
     std::thread new_client(handle_client, client_fd);
     new_client.detach();
   }
-  // // Uncomment this block to pass the first stage
-  // int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  // std::cout << "Client connected\n";
-
-  // Respond to multiple PING commands
-  // char buffer[1024] = {0};
-  // while (recv(client_fd, buffer, sizeof(buffer), 0)) {
-  //   // Send PONG response 
-  //   send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
-  // }
   
   close(server_fd);
 
