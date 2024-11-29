@@ -158,6 +158,11 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
     return "$" + std::to_string(arguments[1].size()) + "\r\n" + arguments[1] + "\r\n";
 }
 
+// Function to handle INFO command
+std::string handle_info(const std::vector<std::string> &arguments) {
+    return "$11\r\nrole:master\r\n"; 
+}
+
 // Function to handle unknown commands
 std::string unknown_command() {
     return "-ERR unknown command\r\n";
@@ -197,6 +202,8 @@ void handle_client(int client_fd) {
             response = handle_ping(arguments);
         } else if (command == "ECHO") {
             response = handle_echo(arguments);
+        } else if (command == "INFO") {
+            response = handle_info(arguments);
         } else {
             response = unknown_command();
         }
