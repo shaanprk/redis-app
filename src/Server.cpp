@@ -296,15 +296,15 @@ int main(int argc, char **argv) {
 
     int port = 6379;
 
-    // for (int i = 0; i < argc; i++) {
-    //     if (strcmp(argv[i], "--port") == 0) {
-    //         port = std::stoi(argv[++i]);
-    //     } else if (strcmp(argv[i], "--replicaof") == 0) {
-    //         is_master = false;
-    //         // master_host = std::stoi(argv[++i]);
-    //         // master_port = std::stoi(argv[++i]);
-    //     }
-    // }
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "--port") == 0) {
+            port = std::stoi(argv[++i]);
+        } else if (strcmp(argv[i], "--replicaof") == 0) {
+            is_master = false;
+            // master_host = std::stoi(argv[++i]);
+            // master_port = std::stoi(argv[++i]);
+        }
+    }
 
     server_addr.sin_port = htons(port);
 
