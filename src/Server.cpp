@@ -21,6 +21,8 @@ std::string server_role = "master";
 bool is_master = true;
 std::string replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
 int offset = 0;
+std::string master_host;
+std::string master_port;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
@@ -237,22 +239,14 @@ int main(int argc, char **argv) {
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     int port = 6379;
-    // if (argc > 2 && std::string(argv[1]) == "--port") {
-    //   port = std::stoi(argv[2]);
-    // }
-
-    // if (argc > 4 && std::string(argv[1]) == "--replicaof") {
-    //   std::string master_host = argv[2];
-    //   std::string master_port = argv[3];
-    //   server_role = "slave";
-    //   std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
-    // }
 
     for (int i = 0; i < argc; ++i) {
       if (strcmp(argv[i], "--port") == 0) {
         port = std::stoi(argv[++i]);
       } else if (strcmp(argv[i], "--replicaof") == 0) {
         is_master = false;
+        master_host = std::stoi(argv[++i]);
+        master_port = std::stoi(argv[++i]);
       }
     }
 
