@@ -241,6 +241,13 @@ int main(int argc, char **argv) {
       port = std::stoi(argv[2]);
     }
 
+    if (argc > 4 && std::string(argv[1]) == "--replicaof") {
+      std::string master_host = argv[2];
+      std::string master_port = argv[3];
+      server_role = "slave"
+      std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
+    }
+
     server_addr.sin_port = htons(port);
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
