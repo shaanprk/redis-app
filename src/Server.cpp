@@ -29,7 +29,7 @@ void handle_client(int client_fd) {
     size_t pos = 0;
     std::string token;
     std::string command;
-    std::string arguments;
+    std::string argument;
     if (input[pos] == '*') {
       pos = input.find("\r\n", pos);
       if (pos == std::string::npos) break;
