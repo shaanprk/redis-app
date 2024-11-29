@@ -19,6 +19,8 @@ std::unordered_map<std::string, std::chrono::steady_clock::time_point> expiratio
 std::mutex store_mutex;
 std::string server_role = "master";
 bool is_master = true;
+std::string replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
+std::int offset = 0;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
@@ -163,7 +165,7 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
 // Function to handle INFO command
 std::string handle_info(const std::vector<std::string> &arguments) {
     std::string response = is_master ? "role:master" : "role:slave";
-    return "+" + response + "\r\n"; 
+    return "+" + response + "\r\n" + "master_replid:" + replication_id + "\r\n" + "master_repl_offset:" + offset; 
 }
 
 // Function to handle unknown commands
