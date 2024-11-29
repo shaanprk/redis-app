@@ -299,7 +299,8 @@ int main(int argc, char **argv) {
     for (int i = 0; i < argc; i++) {
         std::cout << i << ": " << argv[i] << std::endl;
         if (strcmp(argv[i], "--port") == 0) {
-            // port = std::stoi(argv[++i]);
+            port = std::stoi(argv[++i]);
+            std::cout << "port: " << port << std::endl;
         } else if (strcmp(argv[i], "--replicaof") == 0) {
             is_master = false;
             // master_host = std::stoi(argv[++i]);
