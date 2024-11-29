@@ -13,94 +13,148 @@
 #include <unistd.h>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
 
 std::unordered_map<std::string, std::string> key_value_store;
+std::unordered_map<std::string, std::chrono::steady_clock::time_point> expiration_times;
 std::mutex store_mutex;
 
 void handle_client(int client_fd) {
-  std::string response = "+PONG\r\n";
-  char buffer[1024] = {0};
-
-  while (true) {
-    int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
-    if (bytes_received <= 0) {
-      break;
-    }
-
-    buffer[bytes_received] = '\0';
-    std::string input(buffer);
-    
-    size_t pos = 0;
-    std::string command;
-    std::vector<std::string> arguments;
-
-    // Parse number of arguments
-    if (input[pos] == '*') {
-      pos = input.find("\r\n", pos);
-      if (pos == std::string::npos) break;
-      pos += 2;
-    }
-
-    // Parse commands and arguments
-    while (pos < input.size() && input[pos] == '$') {
-      // Skip the "$<len>\r\n" part
-      pos = input.find("\r\n", pos);
-      if (pos == std::string::npos) break; // Malformed input
-      pos += 2; // Skip "\r\n"
-
-      // Extract the next token
-      size_t next_pos = input.find("\r\n", pos);
-      if (next_pos == std::string::npos) break; // Malformed input
-      arguments.push_back(input.substr(pos, next_pos - pos));
-      pos = next_pos + 2; // Skip "\r\n"
-    }
-
-    // Convert command to uppercase for case-insensitive matching
-    command = arguments[0];
-    std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) { return std::toupper(c); });
-
-    // Handle recognized commands
-    if (command == "ECHO") {
-      std::string response = "+" + arguments[1] + "\r\n";
-      send(client_fd, response.c_str(), response.size(), 0);
-    } else if (command == "PING") {
-      send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
-    } else if (command == "SET") {
-      {
-        std::lock_guard<std::mutex> lock(store_mutex);
-        key_value_store[arguments[1]] = arguments[2];
-      }
-      std::string response = "+OK\r\n";
-      send(client_fd, response.c_str(), response.size(), 0);
-    } else if (command == "GET") {
-      if (arguments.size() != 2) {
-          std::string response = "-ERR wrong number of arguments for 'GET'\r\n";
-          send(client_fd, response.c_str(), response.size(), 0);
-          continue;
-      }
-      std::string value;
-      {
-        std::lock_guard<std::mutex> lock(store_mutex);
-        auto it = key_value_store.find(arguments[1]);
-        if (it != key_value_store.end()) {
-          value = it->second;
+    char buffer[1024] = {0}; // Input buffer
+    while (true) {
+        int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0); // Leave space for null terminator
+        if (bytes_received <= 0) {
+            // Connection closed or error occurred
+            break;
         }
-      }
 
-      if (!value.empty()) {
-        std::string response = "+" + value + "\r\n";
-        send(client_fd, response.c_str(), response.size(), 0);
-      } else {
-        std::string response = "$-1\r\n"; // Null bulk reply
-        send(client_fd, response.c_str(), response.size(), 0);
-      } 
-    } else {
-      std::string response = "-ERR unknown command\r\n";
-      send(client_fd, response.c_str(), response.size(), 0);
+        buffer[bytes_received] = '\0';
+        std::string input(buffer);
+        std::cout << "Received raw input: " << input;
+
+        // Parse Redis protocol input
+        size_t pos = 0;
+        std::string command;
+        std::vector<std::string> arguments;
+
+        // Parse number of arguments (e.g., "*3")
+        if (input[pos] == '*') {
+            pos = input.find("\r\n", pos);
+            if (pos == std::string::npos) break; // Malformed input
+            pos += 2; // Skip "\r\n"
+        }
+
+        // Parse command and arguments
+        while (pos < input.size() && input[pos] == '$') {
+            // Skip the "$<len>\r\n" part
+            pos = input.find("\r\n", pos);
+            if (pos == std::string::npos) break; // Malformed input
+            pos += 2; // Skip "\r\n"
+
+            // Extract the next token
+            size_t next_pos = input.find("\r\n", pos);
+            if (next_pos == std::string::npos) break; // Malformed input
+            arguments.push_back(input.substr(pos, next_pos - pos));
+            pos = next_pos + 2; // Skip "\r\n"
+        }
+
+        // Ensure at least one argument (the command) is provided
+        if (arguments.empty()) {
+            std::string response = "-ERR malformed command\r\n";
+            send(client_fd, response.c_str(), response.size(), 0);
+            continue;
+        }
+
+        // Extract the command and convert it to uppercase
+        command = arguments[0];
+        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) { return std::toupper(c); });
+
+        // Handle recognized commands
+        if (command == "SET") {
+            if (arguments.size() < 3 || arguments.size() > 5) {
+                std::string response = "-ERR wrong number of arguments for 'SET'\r\n";
+                send(client_fd, response.c_str(), response.size(), 0);
+                continue;
+            }
+
+            std::string key = arguments[1];
+            std::string value = arguments[2];
+            long long expiry_ms = -1;
+
+            // Parse optional PX argument
+            if (arguments.size() == 5) {
+                std::string option = arguments[3];
+                std::transform(option.begin(), option.end(), option.begin(), [](unsigned char c) { return std::toupper(c); });
+                if (option == "PX") {
+                    try {
+                        expiry_ms = std::stoll(arguments[4]);
+                    } catch (...) {
+                        std::string response = "-ERR invalid PX argument\r\n";
+                        send(client_fd, response.c_str(), response.size(), 0);
+                        continue;
+                    }
+                } else {
+                    std::string response = "-ERR unknown option\r\n";
+                    send(client_fd, response.c_str(), response.size(), 0);
+                    continue;
+                }
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(store_mutex);
+                key_value_store[key] = value;
+                if (expiry_ms > 0) {
+                    expiration_times[key] = std::chrono::steady_clock::now() + std::chrono::milliseconds(expiry_ms);
+                } else {
+                    expiration_times.erase(key);
+                }
+            }
+
+            std::string response = "+OK\r\n";
+            send(client_fd, response.c_str(), response.size(), 0);
+
+        } else if (command == "GET") {
+            if (arguments.size() != 2) {
+                std::string response = "-ERR wrong number of arguments for 'GET'\r\n";
+                send(client_fd, response.c_str(), response.size(), 0);
+                continue;
+            }
+
+            std::string key = arguments[1];
+            std::string value;
+            bool is_expired = false;
+
+            {
+                std::lock_guard<std::mutex> lock(store_mutex);
+                auto it = expiration_times.find(key);
+                if (it != expiration_times.end() && std::chrono::steady_clock::now() > it->second) {
+                    // Key has expired
+                    key_value_store.erase(key);
+                    expiration_times.erase(it);
+                    is_expired = true;
+                } else {
+                    auto kv_it = key_value_store.find(key);
+                    if (kv_it != key_value_store.end()) {
+                        value = kv_it->second;
+                    }
+                }
+            }
+
+            if (is_expired || value.empty()) {
+                std::string response = "$-1\r\n"; // Null bulk reply
+                send(client_fd, response.c_str(), response.size(), 0);
+            } else {
+                std::string response = "+" + value + "\r\n";
+                send(client_fd, response.c_str(), response.size(), 0);
+            }
+
+        } else {
+            std::string response = "-ERR unknown command\r\n";
+            send(client_fd, response.c_str(), response.size(), 0);
+        }
     }
-  }
 
-  close(client_fd);
+    close(client_fd);
 }
 
 int main(int argc, char **argv) {
