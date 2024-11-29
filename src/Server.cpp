@@ -163,7 +163,7 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
 // Function to handle INFO command
 std::string handle_info(const std::vector<std::string> &arguments) {
     std::string response = is_master ? "role:master" : "role:slave";
-    return "+" + response.size() + response + "\r\n"; 
+    return "+" + std::to_string(response.size()) + "\r\n" + response + "\r\n"; 
 }
 
 // Function to handle unknown commands
