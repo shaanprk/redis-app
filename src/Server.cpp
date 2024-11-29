@@ -78,22 +78,21 @@ void handle_client(int client_fd) {
           send(client_fd, response.c_str(), response.size(), 0);
           continue;
       }
-
       std::string value;
       {
-          std::lock_guard<std::mutex> lock(store_mutex);
-          auto it = key_value_store.find(arguments[1]);
-          if (it != key_value_store.end()) {
-              value = it->second;
-          }
+        std::lock_guard<std::mutex> lock(store_mutex);
+        auto it = key_value_store.find(arguments[1]);
+        if (it != key_value_store.end()) {
+          value = it->second;
+        }
       }
 
       if (!value.empty()) {
-          std::string response = "+" + value + "\r\n";
-          send(client_fd, response.c_str(), response.size(), 0);
+        std::string response = "+" + value + "\r\n";
+        send(client_fd, response.c_str(), response.size(), 0);
       } else {
-          std::string response = "$-1\r\n"; // Null bulk reply
-          send(client_fd, response.c_str(), response.size(), 0);
+        std::string response = "$-1\r\n"; // Null bulk reply
+        send(client_fd, response.c_str(), response.size(), 0);
       } 
     } else {
       std::string response = "-ERR unknown command\r\n";
