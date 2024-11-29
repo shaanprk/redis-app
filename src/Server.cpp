@@ -297,6 +297,7 @@ int main(int argc, char **argv) {
     int port = 6379;
 
     for (int i = 0; i < argc; i++) {
+        std::cout << argv[i];
         if (strcmp(argv[i], "--port") == 0) {
             // port = std::stoi(argv[++i]);
         } else if (strcmp(argv[i], "--replicaof") == 0) {
