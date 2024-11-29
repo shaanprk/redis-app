@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
     if (argc > 4 && std::string(argv[1]) == "--replicaof") {
       std::string master_host = argv[2];
       std::string master_port = argv[3];
-      server_role = "slave"
+      server_role = "slave";
       std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
     }
 
