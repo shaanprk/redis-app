@@ -18,6 +18,7 @@ std::unordered_map<std::string, std::string> key_value_store;
 std::unordered_map<std::string, std::chrono::steady_clock::time_point> expiration_times;
 std::mutex store_mutex;
 std::string server_role = "master";
+bool is_master = true;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
@@ -161,11 +162,8 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
 
 // Function to handle INFO command
 std::string handle_info(const std::vector<std::string> &arguments) {
-    if (arguments.size() == 2 && arguments[1] == "replication") {
-      std::string role_info = "role:" + server_role + "\r\n";
-      return "$" + std::to_string(role_info.size()) + "\r\n" + role_info;
-    }
-    return "$11\r\nrole:master\r\n"; 
+    std::string response = is_master ? "role:master" : "role:slave";
+    return "+" + response.size() + response + "\r\n"; 
 }
 
 // Function to handle unknown commands
@@ -237,15 +235,23 @@ int main(int argc, char **argv) {
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     int port = 6379;
-    if (argc > 2 && std::string(argv[1]) == "--port") {
-      port = std::stoi(argv[2]);
-    }
+    // if (argc > 2 && std::string(argv[1]) == "--port") {
+    //   port = std::stoi(argv[2]);
+    // }
 
-    if (argc > 4 && std::string(argv[1]) == "--replicaof") {
-      std::string master_host = argv[2];
-      std::string master_port = argv[3];
-      server_role = "slave";
-      std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
+    // if (argc > 4 && std::string(argv[1]) == "--replicaof") {
+    //   std::string master_host = argv[2];
+    //   std::string master_port = argv[3];
+    //   server_role = "slave";
+    //   std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
+    // }
+
+    for (int i = 0; i < argc; i++) {
+      if (strcmp(argv[i], "--port") == 0) {
+        port = std::stoi(argv(i++));
+      } else if (strcmp(argv[i], "--replicaof") == 0) {
+        is_master = false;
+      }
     }
 
     server_addr.sin_port = htons(port);
