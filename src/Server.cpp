@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <vector>
 
+std::unordered_map<std::string, std::string> key_value_store;
+std::mutex store_mutex;
 
 void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
@@ -63,9 +65,36 @@ void handle_client(int client_fd) {
     } else if (command == "PING") {
       send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
     } else if (command == "SET") {
-      
-    }
-    else {
+      {
+        std::lock_guard<std::mutex> lock(store_mutex);
+        key_value_store[arguments[1]] = arguments[2];
+      }
+      std::string response = "+OK\r\n";
+      send(client_fd, response.c_str(), response.size(), 0);
+    } else if (command == "GET") {
+      if (arguments.size() != 2) {
+          std::string response = "-ERR wrong number of arguments for 'GET'\r\n";
+          send(client_fd, response.c_str(), response.size(), 0);
+          continue;
+      }
+
+      std::string value;
+      {
+          std::lock_guard<std::mutex> lock(store_mutex);
+          auto it = key_value_store.find(arguments[1]);
+          if (it != key_value_store.end()) {
+              value = it->second;
+          }
+      }
+
+      if (!value.empty()) {
+          std::string response = "+" + value + "\r\n";
+          send(client_fd, response.c_str(), response.size(), 0);
+      } else {
+          std::string response = "$-1\r\n"; // Null bulk reply
+          send(client_fd, response.c_str(), response.size(), 0);
+      } 
+    } else {
       std::string response = "-ERR unknown command\r\n";
       send(client_fd, response.c_str(), response.size(), 0);
     }
