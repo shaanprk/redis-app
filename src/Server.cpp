@@ -300,8 +300,8 @@ int main(int argc, char **argv) {
         port = std::stoi(argv[++i]);
       } else if (strcmp(argv[i], "--replicaof") == 0) {
         is_master = false;
-        master_host = std::stoi(argv[++i]);
-        master_port = std::stoi(argv[++i]);
+        // master_host = std::stoi(argv[++i]);
+        // master_port = std::stoi(argv[++i]);
       }
     }
 
