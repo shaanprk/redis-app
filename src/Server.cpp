@@ -13,7 +13,7 @@ void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
   char buffer[1024] = {0};
   while (true) {
-    int test = recv(client_fd, buffer, sizeof(buffer), 0)
+    int test = recv(client_fd, buffer, sizeof(buffer), 0);
     if (test == 1) {
       break;
     }
