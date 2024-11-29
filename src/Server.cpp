@@ -14,7 +14,7 @@ void handle_client(int client_fd) {
   char buffer[1024] = {0};
   while (true) {
     int test = recv(client_fd, buffer, sizeof(buffer), 0);
-    std::cout << test;
+    std::cout << "Input: " << test;
     if (test == 1) {
       break;
     }
