@@ -64,7 +64,7 @@ void handle_client(int client_fd) {
     if (command == "ECHO") {
       std::string response = "+" + argument + "\r\n";
       send(client_fd, response.c_str(), response.size(), 0);
-    } elif (command == "PING") {
+    } else if (command == "PING") {
       send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
     } else {
       std::string response = "-ERR unknown command\r\n";
