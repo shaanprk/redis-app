@@ -118,6 +118,46 @@ std::string handle_get(const std::vector<std::string> &arguments) {
     return "+" + value + "\r\n";
 }
 
+// Function to handle DEL command
+std::string handle_del(const std::vector<std::string> &arguments) {
+    if (arguments.size() < 2) {
+        return "-ERR wrong number of arguments for 'DEL'\r\n";
+    }
+
+    int keys_deleted = 0;
+    {
+        std::lock_guard<std::mutex> lock(store_mutex);
+        for (size_t i = 1; i < arguments.size(); ++i) {
+            std::string key = arguments[i];
+            if (key_value_store.erase(key) > 0) {
+                expiration_times.erase(key);
+                ++keys_deleted;
+            }
+        }
+    }
+
+    return ":" + std::to_string(keys_deleted) + "\r\n";
+}
+
+// Function to handle PING command
+std::string handle_ping(const std::vector<std::string> &arguments) {
+    if (arguments.size() == 1) {
+        return "+PONG\r\n";
+    } else if (arguments.size() == 2) {
+        return "+" + arguments[1] + "\r\n";
+    } else {
+        return "-ERR wrong number of arguments for 'PING'\r\n";
+    }
+}
+
+// Function to handle ECHO command
+std::string handle_echo(const std::vector<std::string> &arguments) {
+    if (arguments.size() != 2) {
+        return "-ERR wrong number of arguments for 'ECHO'\r\n";
+    }
+    return "$" + std::to_string(arguments[1].size()) + "\r\n" + arguments[1] + "\r\n";
+}
+
 // Function to handle unknown commands
 std::string unknown_command() {
     return "-ERR unknown command\r\n";
@@ -151,6 +191,12 @@ void handle_client(int client_fd) {
             response = handle_set(arguments);
         } else if (command == "GET") {
             response = handle_get(arguments);
+        } else if (command == "DEL") {
+            response = handle_del(arguments);
+        } else if (command == "PING") {
+            response = handle_ping(arguments);
+        } else if (command == "ECHO") {
+            response = handle_echo(arguments);
         } else {
             response = unknown_command();
         }
@@ -181,6 +227,7 @@ int main() {
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
         std::cerr << "Failed to bind to port 6379\n";
+
         return 1;
     }
 
