@@ -207,7 +207,7 @@ void handle_client(int client_fd) {
     close(client_fd);
 }
 
-int main(argc, char **argv) {
+int main(int argc, char **argv) {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
         std::cerr << "Failed to create server socket\n";
