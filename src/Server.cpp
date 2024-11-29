@@ -20,7 +20,7 @@ std::mutex store_mutex;
 std::string server_role = "master";
 bool is_master = true;
 std::string replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
-std::int offset = 0;
+int offset = 0;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
