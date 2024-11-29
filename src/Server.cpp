@@ -246,9 +246,9 @@ int main(int argc, char **argv) {
     //   std::cout << "Server is running as a replica of " << master_host << ":" << master_port << std::endl;
     // }
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; ++i) {
       if (strcmp(argv[i], "--port") == 0) {
-        port = std::stoi(argv[i++]);
+        port = std::stoi(argv[++i]);
       } else if (strcmp(argv[i], "--replicaof") == 0) {
         is_master = false;
       }
