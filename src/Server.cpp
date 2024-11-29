@@ -237,6 +237,7 @@ void handle_client(int client_fd) {
     while (true) {
         int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
         if (bytes_received <= 0) {
+            close(client_fd);
             break; // Connection closed or error occurred
         }
 
@@ -297,8 +298,8 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "--port") == 0) {
-            port = std::stoi(argv[i++]);
-            std::cout << port;
+            port = std::stoi(argv[++i]);
+            // std::cout << port;
         } else if (strcmp(argv[i], "--replicaof") == 0) {
             is_master = false;
             // master_host = std::stoi(argv[++i]);
@@ -310,7 +311,6 @@ int main(int argc, char **argv) {
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
         std::cerr << "Failed to bind to port 6379\n";
-
         return 1;
     }
 
