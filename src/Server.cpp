@@ -8,6 +8,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <thread>
+#include <cctype>
+#include <algorithm>
+#include <unistd.h>
+
 
 void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
@@ -21,10 +25,54 @@ void handle_client(int client_fd) {
 
     buffer[bytes_received] = '\0';
     std::string input(buffer);
-    std::cout << "Input: " << input;
-    // Send PONG response 
-    send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
+    
+    size_t pos = 0;
+    std::string token;
+    std::string command;
+    std::string arguments;
+    if (input[pos] == '*') {
+      pos = input.find("\r\n", pos);
+      if (pos == std::string::npos) break;
+      pos += 2;
+    }
+
+    // Parse command (e.g., "$4\r\nLLEN")
+    if (input[pos] == '$') {
+      pos = input.find("\r\n", pos);
+      if (pos == std::string::npos) break; // Malformed input
+      pos += 2; // Skip "\r\n"
+      size_t next_pos = input.find("\r\n", pos);
+      if (next_pos == std::string::npos) break; // Malformed input
+      command = input.substr(pos, next_pos - pos);
+      pos = next_pos + 2; // Skip "\r\n"
+    }
+
+    // Parse argument (e.g., "$6\r\nmylist")
+    if (input[pos] == '$') {
+      pos = input.find("\r\n", pos);
+      if (pos == std::string::npos) break; // Malformed input
+      pos += 2; // Skip "\r\n"
+      size_t next_pos = input.find("\r\n", pos);
+      if (next_pos == std::string::npos) break; // Malformed input
+      argument = input.substr(pos, next_pos - pos);
+    }
+
+    // Convert command to uppercase for case-insensitive matching
+    std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) { return std::toupper(c); });
+
+    // Handle recognized commands
+    if (command == "ECHO") {
+      std::string response = "+" + argument + "\r\n";
+      send(client_fd, response.c_str(), response.size(), 0);
+    } elif (command == "PING") {
+      send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
+    } else {
+      std::string response = "-ERR unknown command\r\n";
+      send(client_fd, response.c_str(), response.size(), 0);
+    }
   }
+
+  close(client_fd);
 }
 
 int main(int argc, char **argv) {
