@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include <vector>
+#include <unordered_map>
 
 std::unordered_map<std::string, std::string> key_value_store;
 std::mutex store_mutex;
