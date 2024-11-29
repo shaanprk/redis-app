@@ -164,8 +164,8 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
 
 // Function to handle INFO command
 std::string handle_info(const std::vector<std::string> &arguments) {
-    std::string response = is_master ? "role:master" : "role:slave";
-    return "+" + response + "\r\n" + "master_replid:" + replication_id + "\r\n" + "master_repl_offset:" + offset; 
+    std::string response = is_master ? "role:master\nmaster_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\nmaster_repl_offset:0" : "role:slave";
+    return "+" + response + "\r\n"; 
 }
 
 // Function to handle unknown commands
