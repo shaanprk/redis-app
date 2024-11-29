@@ -225,7 +225,7 @@ int main(argc, char **argv) {
     server_addr.sin_addr.s_addr = INADDR_ANY;
 
     int port = 6379;
-    if (argc > 2 && std::string(argv[1] == "--port")) {
+    if (argc > 2 && std::string(argv[1]) == "--port") {
       port = std::stoi(argv[2])
     }
 
