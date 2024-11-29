@@ -7,8 +7,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <thread>
 
-void handle_client(int client_id) {
+void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
   char buffer[1024] = {0};
   while (recv(client_fd, buffer, sizeof(buffer), 0)) {
