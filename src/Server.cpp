@@ -12,12 +12,16 @@
 void handle_client(int client_fd) {
   std::string response = "+PONG\r\n";
   char buffer[1024] = {0};
+
   while (true) {
     int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
     if (bytes_received <= 0) {
       break;
     }
-    std::cout << "Input: " << buffer;
+
+    buffer[bytes_received] = '\0';
+    std::string input(buffer);
+    std::cout << "Input: " << input;
     // Send PONG response 
     send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
   }
