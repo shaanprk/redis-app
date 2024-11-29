@@ -17,6 +17,7 @@
 std::unordered_map<std::string, std::string> key_value_store;
 std::unordered_map<std::string, std::chrono::steady_clock::time_point> expiration_times;
 std::mutex store_mutex;
+std::string server_role = "master";
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
