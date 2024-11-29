@@ -70,11 +70,11 @@ int main(int argc, char **argv) {
   // std::cout << "Client connected\n";
 
   // Respond to multiple PING commands
-  char buffer[1024] = {0};
-  while (recv(client_fd, buffer, sizeof(buffer), 0)) {
-    // Send PONG response 
-    send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
-  }
+  // char buffer[1024] = {0};
+  // while (recv(client_fd, buffer, sizeof(buffer), 0)) {
+  //   // Send PONG response 
+  //   send(client_fd, "+PONG\r\n", strlen("+PONG\r\n"), 0);
+  // }
   
   close(server_fd);
 
