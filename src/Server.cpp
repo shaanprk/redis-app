@@ -160,6 +160,10 @@ std::string handle_echo(const std::vector<std::string> &arguments) {
 
 // Function to handle INFO command
 std::string handle_info(const std::vector<std::string> &arguments) {
+    if (arguments.size() == 2 && arguments[1] == "replication") {
+      std::string role_info = "role:" + server_role + "\r\n";
+      return "$" + std::to_string(role_info.size()) + "\r\n" + role_info;
+    }
     return "$11\r\nrole:master\r\n"; 
 }
 
