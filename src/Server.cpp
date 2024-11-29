@@ -11,6 +11,7 @@
 #include <cctype>
 #include <algorithm>
 #include <unistd.h>
+#include <vector>
 
 
 void handle_client(int client_fd) {
