@@ -324,9 +324,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // if (!is_master) {
-    //     send_ping_to_master();
-    // }
+    if (!is_master) {
+        send_ping_to_master();
+    }
 
     std::cout << "Server is running on port 6379\n";
 
