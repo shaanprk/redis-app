@@ -246,6 +246,14 @@ void replica_handshake() {
     }
     bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
 
+    std::string psync_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
+    if (send(master_fd, psync_message.c_str(), psync_message.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF capa command\n";
+        close(master_fd);
+        return;
+    }
+    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
+
     // Close the socket after communication
     close(master_fd);
 }
