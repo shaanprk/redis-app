@@ -229,11 +229,13 @@ void replica_handshake() {
 
     // Send REPLCONF port command to master
     std::string replconf_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
+    listening_port = 6380;
     if (send(master_fd, replconf_port_message.c_str(), replconf_port_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF port command\n";
         close(master_fd);
         return;
     }
+    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
 
     // Send REPLCONF capa command to master
     std::string replconf_capa_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
@@ -242,6 +244,7 @@ void replica_handshake() {
         close(master_fd);
         return;
     }
+    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
 
     // Close the socket after communication
     close(master_fd);
