@@ -216,7 +216,7 @@ void send_replconf() {
     close(master_fd);
 }
 
-void send_ping_to_master() {
+void replica_handshake() {
     // Create socket to connect to the master server
     int master_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (master_fd < 0) {
@@ -268,9 +268,16 @@ void send_ping_to_master() {
     }
 
     // Send REPLCONF command to master
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
+    std::string replconf_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
     if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF command\n";
+        std::cerr << "Failed to send REPLCONF port command\n";
+        close(master_fd);
+        return;
+    }
+
+    std::string replconf_capa_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
+    if (send(master_fd, replconf_capa_message.c_str(), replconf_capa_message.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF capa command\n";
         close(master_fd);
         return;
     }
@@ -369,8 +376,7 @@ int main(int argc, char **argv) {
     }
 
     if (!is_master) {
-        send_ping_to_master();
-        send_replconf();
+        replica_handshake();
     }
 
     std::cout << "Server is running on port 6379\n";
