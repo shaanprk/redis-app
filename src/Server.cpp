@@ -221,168 +221,132 @@ void replica_handshake() {
     // Send PING command to master
     std::string ping_message = "*1\r\n$4\r\nPING\r\n";
     if (send(master_fd, ping_message.c_str(), ping_message.size(), 0) < 0) {
-        std::cerr << "Failed to send PING command\n";
+        std::cerr << "Failed to send PING to master\n";
         close(master_fd);
         return;
     }
 
     // Receive response from master
-    char buffer[1024] = {0};
-    int bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::string response(buffer);
-        if (response == "+PONG\r\n") {
-            std::cout << "Received PONG from master\n";
-        } else {
-            std::cerr << "Unexpected response from master: " << response << "\n";
-        }
-    } else {
+    char buffer[1024];
+    int bytes_received = recv(master_fd, buffer, sizeof(buffer), 0);
+    if (bytes_received < 0) {
         std::cerr << "Failed to receive response from master\n";
-    }
-
-    // Send REPLCONF port command to master
-    std::string replconf_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
-    listening_port = 6380;
-    if (send(master_fd, replconf_port_message.c_str(), replconf_port_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF port command\n";
         close(master_fd);
         return;
     }
-    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
 
-    // Send REPLCONF capa command to master
-    std::string replconf_capa_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
-    if (send(master_fd, replconf_capa_message.c_str(), replconf_capa_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF capa command\n";
-        close(master_fd);
-        return;
-    }
-    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
+    // Print the response (just for debugging)
+    std::cout << "Received from master: " << std::string(buffer, bytes_received) << "\n";
 
-    std::string psync_message = "*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n";
-    if (send(master_fd, psync_message.c_str(), psync_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF capa command\n";
-        close(master_fd);
-        return;
-    }
-    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
+    // Send REPLCONF and PSYNC commands to master
+    std::string replconf_message = "*2\r\n$7\r\nREPLCONF\r\n$5\r\nslave\r\n";
+    send(master_fd, replconf_message.c_str(), replconf_message.size(), 0);
 
-    // Close the socket after communication
+    std::string psync_message = "*2\r\n$5\r\nPSYNC\r\n$0\r\n\r\n";
+    send(master_fd, psync_message.c_str(), psync_message.size(), 0);
+
+    // Handle syncing data (not implemented in this simplified example)
     close(master_fd);
 }
 
-// Function to handle individual client connections
-void handle_client(int client_fd) {
-    char buffer[1024] = {0};
+void handle_client(int client_socket) {
+    // Buffer to store the client request
+    char buffer[1024];
 
-    while (true) {
-        int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received <= 0) {
-            close(client_fd);
-            break; // Connection closed or error occurred
-        }
-
-        buffer[bytes_received] = '\0';
-        std::string input(buffer);
-        std::vector<std::string> arguments = parse_input(input);
-
-        if (arguments.empty()) {
-            std::string response = "-ERR malformed command\r\n";
-            send(client_fd, response.c_str(), response.size(), 0);
-            continue;
-        }
-
-        std::string command = arguments[0];
-        std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c) { return std::toupper(c); });
-
-        std::string response;
-        if (command == "SET") {
-            response = handle_set(arguments);
-        } else if (command == "GET") {
-            response = handle_get(arguments);
-        } else if (command == "DEL") {
-            response = handle_del(arguments);
-        } else if (command == "PING") {
-            response = handle_ping(arguments);
-        } else if (command == "ECHO") {
-            response = handle_echo(arguments);
-        } else if (command == "INFO") {
-            response = handle_info(arguments);
-        } else if (command == "REPLCONF") {
-            response = handle_replconf(arguments);
-        } else if (command == "PSYNC") {
-            response = handle_psync(arguments);
-        } else {
-            response = unknown_command();
-        }
-
-        send(client_fd, response.c_str(), response.size(), 0);
+    // Read client request
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
+    if (bytes_received <= 0) {
+        close(client_socket);
+        return;
     }
 
-    close(client_fd);
+    std::string input(buffer, bytes_received);
+    std::vector<std::string> arguments = parse_input(input);
+
+    std::string response;
+
+    // Match the command and call the corresponding handler
+    if (arguments[0] == "SET") {
+        response = handle_set(arguments);
+    } else if (arguments[0] == "GET") {
+        response = handle_get(arguments);
+    } else if (arguments[0] == "DEL") {
+        response = handle_del(arguments);
+    } else if (arguments[0] == "PING") {
+        response = handle_ping(arguments);
+    } else if (arguments[0] == "ECHO") {
+        response = handle_echo(arguments);
+    } else if (arguments[0] == "INFO") {
+        response = handle_info(arguments);
+    } else if (arguments[0] == "REPLCONF") {
+        response = handle_replconf(arguments);
+    } else if (arguments[0] == "PSYNC") {
+        response = handle_psync(arguments);
+    } else {
+        response = unknown_command();
+    }
+
+    // Send the response to the client
+    send(client_socket, response.c_str(), response.size(), 0);
+    close(client_socket);
 }
 
 int main(int argc, char **argv) {
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        std::cerr << "Failed to create server socket\n";
+    // Check if there is a role (master/slave) specified
+    if (argc < 3) {
+        std::cerr << "Usage: ./redis_server <master/slave> <port>\n";
         return 1;
     }
 
-    int reuse = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        std::cerr << "setsockopt failed\n";
+    server_role = argv[1];
+    listening_port = std::stoi(argv[2]);
+
+    if (server_role == "slave") {
+        if (argc != 5) {
+            std::cerr << "Usage for slave: ./redis_server slave <port> <master_host> <master_port>\n";
+            return 1;
+        }
+        master_host = argv[3];
+        master_port = std::stoi(argv[4]);
+
+        // Start the replication handshake with the master
+        std::thread(replica_handshake).detach();
+    }
+
+    // Create socket to listen for connections
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
+        std::cerr << "Failed to create socket\n";
         return 1;
     }
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(listening_port);
 
-    int port = 6379;
-
-    for (int i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "--port") == 0) {
-            port = std::stoi(argv[++i]);
-        } else if (strcmp(argv[i], "--replicaof") == 0) {
-            is_master = false;
-            std::string host_and_port = argv[++i];
-            master_host = host_and_port.substr(0, host_and_port.find(" "));
-            master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
-
-            std::cout << "master_host: " << master_host << std::endl;
-            std::cout << "master_port: " << master_port << std::endl;
-        }
-    }
-
-    server_addr.sin_port = htons(port);
-
-    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
-        std::cerr << "Failed to bind to port 6379\n";
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Failed to bind socket\n";
         return 1;
     }
 
-    if (listen(server_fd, 5) != 0) {
-        std::cerr << "listen failed\n";
+    if (listen(server_fd, 5) < 0) {
+        std::cerr << "Failed to listen on socket\n";
         return 1;
     }
 
-    if (!is_master) {
-        replica_handshake();
-    }
+    std::cout << "Server listening on port " << listening_port << "...\n";
 
-    std::cout << "Server is running on port 6379\n";
-
+    // Main server loop to accept and handle clients
     while (true) {
-        struct sockaddr_in client_addr;
-        socklen_t client_addr_len = sizeof(client_addr);
-        int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
-        if (client_fd >= 0) {
-            std::thread(handle_client, client_fd).detach();
+        int client_socket = accept(server_fd, nullptr, nullptr);
+        if (client_socket < 0) {
+            std::cerr << "Failed to accept client connection\n";
+            continue;
         }
+
+        std::thread(handle_client, client_socket).detach();
     }
 
-    close(server_fd);
     return 0;
 }
