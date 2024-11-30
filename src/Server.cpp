@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
             is_master = false;
             std::string host_and_port = argv[++i];
             master_host = host_and_port.substr(0, host_and_port.find(" "));
-            master_port = host_and_port.substr(host_and_port.find(" "), host_and_port.size());
+            master_port = host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size());
             std::cout << "host_and_port: " << host_and_port << std::endl;
             std::cout << "master_host: " << master_host << std::endl;
             std::cout << "master_port: " << master_port << std::endl;
