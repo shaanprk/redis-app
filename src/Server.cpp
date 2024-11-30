@@ -197,7 +197,7 @@ std::string handle_repclonf(const std::vector<std::string> &arguments) {
         else if (subcommand == "capa") {
             std::string capability = arguments[2];
             if (capability == "psync2") {
-                support_psync2 = true; // Enable PSYNC v2 if applicable
+                // support_psync2 = true; // Enable PSYNC v2 if applicable
             } else {
                 return "-ERR unsupported capability\r\n";
             }
