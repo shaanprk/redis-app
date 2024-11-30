@@ -222,7 +222,7 @@ void send_ping_to_master(const std::string& master_host, int master_port, int re
             std::cout << "Received PONG from master\n";
 
             // Send REPLCONF listening-port command after receiving PONG
-            std::string replconf_message = "*2\r\n$7\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(replica_port).length()) + "\r\n" + std::to_string(replica_port) + "\r\n";
+            std::string replconf_message = "+OK\r\n";
             if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
                 std::cerr << "Failed to send REPLCONF command\n";
                 close(master_fd);
