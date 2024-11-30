@@ -204,25 +204,12 @@ void send_replconf() {
         return;
     }
 
-    // Construct REPLCONF command to send listening-port
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + std::to_string(listening_port) + "\r\n";
-
-    // Send REPLCONF command to the master
-    if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF command\n";
+    // Send REPLCONF command to master
+    std::string ping_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
+    if (send(master_fd, ping_message.c_str(), ping_message.size(), 0) < 0) {
+        std::cerr << "Failed to send PING command\n";
         close(master_fd);
         return;
-    }
-
-    // Receive response from master
-    char buffer[1024] = {0};
-    int bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::string response(buffer);
-        std::cout << "Received response from master: " << response << "\n";
-    } else {
-        std::cerr << "Failed to receive response from master\n";
     }
 
     // Close the socket after communication
