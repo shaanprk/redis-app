@@ -171,6 +171,12 @@ std::string handle_info(const std::vector<std::string> &arguments) {
     return "+" + response + "\r\n"; 
 }
 
+// Function to handle REPLCONF command
+std::string handle_replconf(const std::vector<std::string> &arguments) {
+    std::string response = "+OK\r\n";
+    return response;
+}
+
 // Function to handle unknown commands
 std::string unknown_command() {
     return "-ERR unknown command\r\n";
