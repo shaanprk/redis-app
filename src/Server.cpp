@@ -173,35 +173,51 @@ std::string handle_info(const std::vector<std::string> &arguments) {
 
 // Function to handle REPCLONF command
 void send_replica_replconf() {
-    // Create socket to connect to the master
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        std::cerr << "Error creating socket" << std::endl;
+    // Create socket to connect to the master server
+    int master_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (master_fd < 0) {
+        std::cerr << "Failed to create socket for replica to master connection\n";
         return;
     }
 
-    // Set up the master address for connection
     struct sockaddr_in master_addr;
     master_addr.sin_family = AF_INET;
-    master_addr.sin_port = htons(master_port);  // Use pre-existing master_port variable
+    master_addr.sin_port = htons(master_port);  // Use master port
 
-    // Connect to the master
-    if (connect(sockfd, (struct sockaddr*)&master_addr, sizeof(master_addr)) == -1) {
-        std::cerr << "Connection to master failed" << std::endl;
-        close(sockfd);
+    // Resolve master IP address
+    struct hostent *host = gethostbyname(master_host.c_str());
+    if (host == nullptr) {
+        std::cerr << "Failed to resolve master host\n";
+        close(master_fd);
+        return;
+    }
+    memcpy(&master_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+
+    // Connect to the master server
+    if (connect(master_fd, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0) {
+        std::cerr << "Failed to connect to master\n";
+        close(master_fd);
         return;
     }
 
-    // Send REPLCONF listening-port command
-    std::string listening_port_cmd = "REPLCONF listening-port " + std::to_string(listening_port) + "\r\n";
-    send(sockfd, listening_port_cmd.c_str(), listening_port_cmd.length(), 0);
+    // Send REPLCONF listening-port <PORT>
+    std::string replconf_listening_port = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(listening_port).size()) + "\r\n" + std::to_string(listening_port) + "\r\n";
+    if (send(master_fd, replconf_listening_port.c_str(), replconf_listening_port.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF listening-port command\n";
+        close(master_fd);
+        return;
+    }
 
-    // Send REPLCONF capa psync2 command
-    std::string capa_cmd = "REPLCONF capa psync2\r\n";
-    send(sockfd, capa_cmd.c_str(), capa_cmd.length(), 0);
+    // Send REPLCONF capa psync2
+    std::string replconf_capa_psync2 = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
+    if (send(master_fd, replconf_capa_psync2.c_str(), replconf_capa_psync2.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF capa psync2 command\n";
+        close(master_fd);
+        return;
+    }
 
-    // Close the socket after sending the commands
-    close(sockfd);
+    // Close the socket after sending REPLCONF commands
+    close(master_fd);
 }
 
 // Function to handle unknown commands
