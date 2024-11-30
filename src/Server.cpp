@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
     }
 
     if (!is_master) {
-        send_ping_to_master(master_host, master_port, listening_port);
+        send_ping_to_master();
     }
 
     std::cout << "Server is running on port 6379\n";
