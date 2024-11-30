@@ -172,45 +172,37 @@ std::string handle_info(const std::vector<std::string> &arguments) {
 }
 
 // Function to handle REPCLONF command
-std::string handle_repclonf(const std::vector<std::string> &arguments) {
-    if (arguments.size() < 3) {
-        return "-ERR wrong number of argumetns for 'REPCLONF'\r\n";
+void send_replica_replconf() {
+    // Create socket to connect to the master
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        std::cerr << "Error creating socket" << std::endl;
+        return;
     }
 
-    std::string subcommand = arguments[1];
-    std::string response = "+OK\r\n";
-    
-    // {
-    //     std::lock_guard<std::mutex> lock(store_mutex);
+    // Set up the master address for connection
+    struct sockaddr_in master_addr;
+    master_addr.sin_family = AF_INET;
+    master_addr.sin_port = htons(master_port);  // Use pre-existing master_port variable
+    master_addr.sin_addr.s_addr = inet_addr(master_ip.c_str()); // Use pre-existing master_ip variable
 
-    //     // Subcommand: listening-port
-    //     if (subcommand == "listening-port") {
-    //         try {
-    //             int port = std::stoi(arguments[2]);
-    //             listening_port = port; // Store or handle the listening port
-    //             return response;
-    //             // Optionally log or apply configuration changes here
-    //         } catch (...) {
-    //             return "-ERR invalid port number\r\n";
-    //         }
-    //     }
-    //     // Subcommand: capa (capabilities)
-    //     else if (subcommand == "capa") {
-    //         std::string capability = arguments[2];
-    //         if (capability == "psync2") {
-    //             // support_psync2 = true; // Enable PSYNC v2 if applicable
-    //         } else {
-    //             return "-ERR unsupported capability\r\n";
-    //         }
-    //     }
-    //     // Unknown subcommand
-    //     else {
-    //         return "-ERR unknown REPLCONF subcommand\r\n";
-    //     }
-    // }
+    // Connect to the master
+    if (connect(sockfd, (struct sockaddr*)&master_addr, sizeof(master_addr)) == -1) {
+        std::cerr << "Connection to master failed" << std::endl;
+        close(sockfd);
+        return;
+    }
 
-    return response;
+    // Send REPLCONF listening-port command
+    std::string listening_port_cmd = "REPLCONF listening-port " + std::to_string(listening_port) + "\r\n";
+    send(sockfd, listening_port_cmd.c_str(), listening_port_cmd.length(), 0);
 
+    // Send REPLCONF capa psync2 command
+    std::string capa_cmd = "REPLCONF capa psync2\r\n";
+    send(sockfd, capa_cmd.c_str(), capa_cmd.length(), 0);
+
+    // Close the socket after sending the commands
+    close(sockfd);
 }
 
 // Function to handle unknown commands
@@ -310,9 +302,7 @@ void handle_client(int client_fd) {
             response = handle_echo(arguments);
         } else if (command == "INFO") {
             response = handle_info(arguments);
-        } else if (command == "REPCLONF") {
-            response = handle_repclonf(arguments);    
-        }else {
+        } else {
             response = unknown_command();
         }
 
@@ -366,6 +356,7 @@ int main(int argc, char **argv) {
 
     if (!is_master) {
         send_ping_to_master();
+        send_replica_replconf();
     }
 
     std::cout << "Server is running on port 6379\n";
