@@ -185,7 +185,7 @@ void send_ping_to_master() {
 
     struct sockaddr_in master_addr;
     master_addr.sin_family = AF_INET;
-    master_addr.sin_port = htons(std::stoi(master_port));  // Use master port
+    master_addr.sin_port = htons(master_port);  // Use master port
 
     // Resolve master IP address
     struct hostent *host = gethostbyname(master_host.c_str());
