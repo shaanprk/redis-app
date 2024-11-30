@@ -184,7 +184,6 @@ void send_replica_replconf() {
     struct sockaddr_in master_addr;
     master_addr.sin_family = AF_INET;
     master_addr.sin_port = htons(master_port);  // Use pre-existing master_port variable
-    master_addr.sin_addr.s_addr = inet_addr(master_ip.c_str()); // Use pre-existing master_ip variable
 
     // Connect to the master
     if (connect(sockfd, (struct sockaddr*)&master_addr, sizeof(master_addr)) == -1) {
