@@ -24,6 +24,7 @@ int offset = 0;
 std::string master_host;
 int master_port;
 int listening_port;
+const std::string empty_rdb = "\x52\x45\x44\x49\x53\x30\x30\x31\x31\xfa\x09\x72\x65\x64\x69\x73\x2d\x76\x65\x72\x05\x37\x2e\x32\x2e\x30\xfa\x0a\x72\x65\x64\x69\x73\x2d\x62\x69\x74\x73\xc0\x40\xfa\x05\x63\x74\x69\x6d\x65\xc2\x6d\x08\xbc\x65\xfa\x08\x75\x73\x65\x64\x2d\x6d\x65\x6d\xc2\xb0\xc4\x10\x00\xfa\x08\x61\x6f\x66\x2d\x62\x61\x73\x65\xc0\x00\xff\xf0\x6e\x3b\xfe\xc0\xff\x5a\xa2";
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
@@ -180,6 +181,7 @@ std::string handle_replconf(const std::vector<std::string> &arguments) {
 // Function to handle PSYNC command
 std::string handle_psync(const std::vector<std::string> &arguments) {
     std::string response = "+FULLRESYNC " + replication_id + " " + std::to_string(offset) + "\r\n";
+    response += "$" + std::to_string(empty_rdb.length()) + "\r\n" + empty_rdb;
     return response;
 }
 
