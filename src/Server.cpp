@@ -268,7 +268,7 @@ void send_ping_to_master() {
     }
 
     // Send REPLCONF command to master
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + std::to_string(listening_port) + "\r\n";
+    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
     if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF command\n";
         close(master_fd);
