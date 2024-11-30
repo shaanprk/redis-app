@@ -301,7 +301,9 @@ void handle_client(int client_fd) {
             response = handle_echo(arguments);
         } else if (command == "INFO") {
             response = handle_info(arguments);
-        } else {
+        } else if (command == "REPLCONF") {
+            response = handle_replconf(arguments);
+        }else {
             response = unknown_command();
         }
 
