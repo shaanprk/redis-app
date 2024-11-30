@@ -188,6 +188,7 @@ std::string handle_repclonf(const std::vector<std::string> &arguments) {
             try {
                 int port = std::stoi(arguments[2]);
                 listening_port = port; // Store or handle the listening port
+                return response;
                 // Optionally log or apply configuration changes here
             } catch (...) {
                 return "-ERR invalid port number\r\n";
