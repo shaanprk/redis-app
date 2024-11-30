@@ -176,6 +176,71 @@ std::string unknown_command() {
     return "-ERR unknown command\r\n";
 }
 
+void send_replconf() {
+    // Create socket to connect to the master server
+    int master_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (master_fd < 0) {
+        std::cerr << "Failed to create socket for replica to master connection\n";
+        return;
+    }
+
+    struct sockaddr_in master_addr;
+    master_addr.sin_family = AF_INET;
+    master_addr.sin_port = htons(master_port);  // Use master port
+
+    // Resolve master IP address
+    struct hostent *host = gethostbyname(master_host.c_str());
+    if (host == nullptr) {
+        std::cerr << "Failed to resolve master host\n";
+        close(master_fd);
+        return;
+    }
+    memcpy(&master_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+
+    // Connect to the master server
+    if (connect(master_fd, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0) {
+        std::cerr << "Failed to connect to master\n";
+        close(master_fd);
+        return;
+    }
+
+    // First REPLCONF command: REPLCONF listening-port <PORT>
+    std::string listening_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(listening_port).size()) + "\r\n" + std::to_string(listening_port) + "\r\n";
+    
+    if (send(master_fd, listening_port_message.c_str(), listening_port_message.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF listening-port command\n";
+        close(master_fd);
+        return;
+    }
+
+    // Second REPLCONF command: REPLCONF capa psync2
+    std::string capa_psync2_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
+
+    if (send(master_fd, capa_psync2_message.c_str(), capa_psync2_message.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF capa psync2 command\n";
+        close(master_fd);
+        return;
+    }
+
+    // Receive response from master
+    char buffer[1024] = {0};
+    int bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_received > 0) {
+        buffer[bytes_received] = '\0';
+        std::string response(buffer);
+
+        if (response == "+OK\r\n") {
+            std::cout << "Received +OK from master for REPLCONF commands\n";
+        } else {
+            std::cerr << "Unexpected response from master: " << response << "\n";
+        }
+    } else {
+        std::cerr << "Failed to receive response from master\n";
+    }
+
+    // Close the socket after communication
+    close(master_fd);
+}
 
 void send_ping_to_master() {
     // Create socket to connect to the master server
@@ -323,6 +388,7 @@ int main(int argc, char **argv) {
 
     if (!is_master) {
         send_ping_to_master();
+        send_replconf();
     }
 
     std::cout << "Server is running on port 6379\n";
