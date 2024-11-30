@@ -170,6 +170,39 @@ std::string handle_info(const std::vector<std::string> &arguments) {
     return "+" + response + "\r\n"; 
 }
 
+// Function to handle REPCLONF command
+std::string handle_repclonf(const std::vector<std::string> &arguments) {
+    if (arguments.size() < 2) {
+        return "-ERR wrong number of argumetns for 'REPCLONF'\r\n";
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(store_mutex);
+
+        // Example: REPCLONF MASTER host port
+        if (arguments[1] == "MASTER" && arguments.size() == 4) {
+            is_master = false;
+            master_host = arguments[2];
+            try {
+                master_port = std::stoi(arguments[3]);
+            } catch (...) {
+                return "-ERR invalid port number\r\n";
+            }
+            return "+OK\r\n";
+        } 
+        // Example: REPCLONF SLAVE
+        else if (arguments[1] == "SLAVE" && arguments.size() == 2) {
+            is_master = true;
+            return "+OK\r\n";
+        } 
+        // Example: Invalid usage
+        else {
+            return "-ERR invalid repclonf usage\r\n";
+        }
+    }
+
+}
+
 // Function to handle unknown commands
 std::string unknown_command() {
     return "-ERR unknown command\r\n";
@@ -267,7 +300,9 @@ void handle_client(int client_fd) {
             response = handle_echo(arguments);
         } else if (command == "INFO") {
             response = handle_info(arguments);
-        } else {
+        } else if (command == "REPCLONF") {
+            response = handle_repclonf(arguments);    
+        }else {
             response = unknown_command();
         }
 
@@ -297,18 +332,13 @@ int main(int argc, char **argv) {
     int port = 6379;
 
     for (int i = 0; i < argc; i++) {
-        // std::cout << i << ": " << argv[i] << std::endl;
         if (strcmp(argv[i], "--port") == 0) {
             port = std::stoi(argv[++i]);
-            // std::cout << "port: " << port << std::endl;
         } else if (strcmp(argv[i], "--replicaof") == 0) {
             is_master = false;
             std::string host_and_port = argv[++i];
             master_host = host_and_port.substr(0, host_and_port.find(" "));
             master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
-            // std::cout << "host_and_port: " << host_and_port << std::endl;
-            // std::cout << "master_host: " << master_host << std::endl;
-            // std::cout << "master_port: " << master_port << std::endl;
         }
     }
 
