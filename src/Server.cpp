@@ -204,7 +204,7 @@ void send_ping_to_master() {
     }
 
     // Send PING command to master
-    std::string ping_message = "PING\r\n";
+    std::string ping_message = "+PING\r\n";
     if (send(master_fd, ping_message.c_str(), ping_message.size(), 0) < 0) {
         std::cerr << "Failed to send PING command\n";
         close(master_fd);
