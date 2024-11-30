@@ -180,34 +180,34 @@ std::string handle_repclonf(const std::vector<std::string> &arguments) {
     std::string subcommand = arguments[1];
     std::string response = "+OK\r\n";
     
-    {
-        std::lock_guard<std::mutex> lock(store_mutex);
+    // {
+    //     std::lock_guard<std::mutex> lock(store_mutex);
 
-        // Subcommand: listening-port
-        if (subcommand == "listening-port") {
-            try {
-                int port = std::stoi(arguments[2]);
-                listening_port = port; // Store or handle the listening port
-                return response;
-                // Optionally log or apply configuration changes here
-            } catch (...) {
-                return "-ERR invalid port number\r\n";
-            }
-        }
-        // Subcommand: capa (capabilities)
-        else if (subcommand == "capa") {
-            std::string capability = arguments[2];
-            if (capability == "psync2") {
-                // support_psync2 = true; // Enable PSYNC v2 if applicable
-            } else {
-                return "-ERR unsupported capability\r\n";
-            }
-        }
-        // Unknown subcommand
-        else {
-            return "-ERR unknown REPLCONF subcommand\r\n";
-        }
-    }
+    //     // Subcommand: listening-port
+    //     if (subcommand == "listening-port") {
+    //         try {
+    //             int port = std::stoi(arguments[2]);
+    //             listening_port = port; // Store or handle the listening port
+    //             return response;
+    //             // Optionally log or apply configuration changes here
+    //         } catch (...) {
+    //             return "-ERR invalid port number\r\n";
+    //         }
+    //     }
+    //     // Subcommand: capa (capabilities)
+    //     else if (subcommand == "capa") {
+    //         std::string capability = arguments[2];
+    //         if (capability == "psync2") {
+    //             // support_psync2 = true; // Enable PSYNC v2 if applicable
+    //         } else {
+    //             return "-ERR unsupported capability\r\n";
+    //         }
+    //     }
+    //     // Unknown subcommand
+    //     else {
+    //         return "-ERR unknown REPLCONF subcommand\r\n";
+    //     }
+    // }
 
     return response;
 
