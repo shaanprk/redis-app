@@ -22,7 +22,7 @@ bool is_master = true;
 std::string replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
 int offset = 0;
 std::string master_host;
-std::string master_port;
+int master_port;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
@@ -305,11 +305,10 @@ int main(int argc, char **argv) {
             is_master = false;
             std::string host_and_port = argv[++i];
             master_host = host_and_port.substr(0, host_and_port.find(" "));
-            master_port = host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size());
+            master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
             std::cout << "host_and_port: " << host_and_port << std::endl;
             std::cout << "master_host: " << master_host << std::endl;
             std::cout << "master_port: " << master_port << std::endl;
-            // master_port = std::stoi(argv[++i]);
         }
     }
 
