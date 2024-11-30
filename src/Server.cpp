@@ -177,6 +177,12 @@ std::string handle_replconf(const std::vector<std::string> &arguments) {
     return response;
 }
 
+// Function to handle PSYNC command
+std::string handle_psync(const std::vector<std::string> &arguments) {
+    std::string response = "+FULLRESYNC\r\n" + replication_id + "\r\n" + offset + "\r\n";
+    return response;
+}
+
 // Function to handle unknown commands
 std::string unknown_command() {
     return "-ERR unknown command\r\n";
@@ -303,7 +309,9 @@ void handle_client(int client_fd) {
             response = handle_info(arguments);
         } else if (command == "REPLCONF") {
             response = handle_replconf(arguments);
-        }else {
+        } else if (command == "PSYNC") {
+            response = handle_psync(arguments);
+        } else {
             response = unknown_command();
         }
 
