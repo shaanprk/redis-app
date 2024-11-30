@@ -300,13 +300,13 @@ int main(int argc, char **argv) {
         std::cout << i << ": " << argv[i] << std::endl;
         if (strcmp(argv[i], "--port") == 0) {
             port = std::stoi(argv[++i]);
-            std::cout << "port: " << port << std::endl;
+            // std::cout << "port: " << port << std::endl;
         } else if (strcmp(argv[i], "--replicaof") == 0) {
             is_master = false;
             std::string host_and_port = argv[++i];
             master_host = host_and_port.substr(0, host_and_port.find(" "));
             master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
-            std::cout << "host_and_port: " << host_and_port << std::endl;
+            // std::cout << "host_and_port: " << host_and_port << std::endl;
             std::cout << "master_host: " << master_host << std::endl;
             std::cout << "master_port: " << master_port << std::endl;
         }
