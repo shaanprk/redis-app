@@ -176,7 +176,8 @@ std::string unknown_command() {
     return "-ERR unknown command\r\n";
 }
 
-void send_ping_to_master(const std::string &master_host, int master_port, int replica_port) {
+
+void send_ping_to_master() {
     // Create socket to connect to the master server
     int master_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (master_fd < 0) {
@@ -227,108 +228,9 @@ void send_ping_to_master(const std::string &master_host, int master_port, int re
         std::cerr << "Failed to receive response from master\n";
     }
 
-    // Send REPLCONF listening-port <PORT>
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(replica_port).size()) + "\r\n" + std::to_string(replica_port) + "\r\n";
-    if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF listening-port command\n";
-        close(master_fd);
-        return;
-    }
-
-    // Receive response from master for REPLCONF
-    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::string replconf_response(buffer);
-        if (replconf_response == "+OK\r\n") {
-            std::cout << "Received +OK from master for REPLCONF listening-port\n";
-        } else {
-            std::cerr << "Unexpected response from master for REPLCONF: " << replconf_response << "\n";
-        }
-    } else {
-        std::cerr << "Failed to receive response for REPLCONF from master\n";
-    }
-
-    // Send REPLCONF capa psync2
-    std::string replconf_capa_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
-    if (send(master_fd, replconf_capa_message.c_str(), replconf_capa_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF capa psync2 command\n";
-        close(master_fd);
-        return;
-    }
-
-    // Receive response from master for REPLCONF capa psync2
-    bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::string capa_response(buffer);
-        if (capa_response == "+OK\r\n") {
-            std::cout << "Received +OK from master for REPLCONF capa psync2\n";
-        } else {
-            std::cerr << "Unexpected response from master for REPLCONF capa psync2: " << capa_response << "\n";
-        }
-    } else {
-        std::cerr << "Failed to receive response for REPLCONF capa psync2 from master\n";
-    }
-
     // Close the socket after communication
     close(master_fd);
 }
-
-// void send_ping_to_master() {
-//     // Create socket to connect to the master server
-//     int master_fd = socket(AF_INET, SOCK_STREAM, 0);
-//     if (master_fd < 0) {
-//         std::cerr << "Failed to create socket for replica to master connection\n";
-//         return;
-//     }
-
-//     struct sockaddr_in master_addr;
-//     master_addr.sin_family = AF_INET;
-//     master_addr.sin_port = htons(master_port);  // Use master port
-
-//     // Resolve master IP address
-//     struct hostent *host = gethostbyname(master_host.c_str());
-//     if (host == nullptr) {
-//         std::cerr << "Failed to resolve master host\n";
-//         close(master_fd);
-//         return;
-//     }
-//     memcpy(&master_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-
-//     // Connect to the master server
-//     if (connect(master_fd, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0) {
-//         std::cerr << "Failed to connect to master\n";
-//         close(master_fd);
-//         return;
-//     }
-
-//     // Send PING command to master
-//     std::string ping_message = "*1\r\n$4\r\nPING\r\n";
-//     if (send(master_fd, ping_message.c_str(), ping_message.size(), 0) < 0) {
-//         std::cerr << "Failed to send PING command\n";
-//         close(master_fd);
-//         return;
-//     }
-
-//     // Receive response from master
-//     char buffer[1024] = {0};
-//     int bytes_received = recv(master_fd, buffer, sizeof(buffer) - 1, 0);
-//     if (bytes_received > 0) {
-//         buffer[bytes_received] = '\0';
-//         std::string response(buffer);
-//         if (response == "+PONG\r\n") {
-//             std::cout << "Received PONG from master\n";
-//         } else {
-//             std::cerr << "Unexpected response from master: " << response << "\n";
-//         }
-//     } else {
-//         std::cerr << "Failed to receive response from master\n";
-//     }
-
-//     // Close the socket after communication
-//     close(master_fd);
-// }
 
 // Function to handle individual client connections
 void handle_client(int client_fd) {
