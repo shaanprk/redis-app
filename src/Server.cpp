@@ -23,6 +23,7 @@ std::string replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
 int offset = 0;
 std::string master_host;
 int master_port;
+int listening_port;
 
 // Function to parse the Redis protocol input
 std::vector<std::string> parse_input(const std::string &input) {
