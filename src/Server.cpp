@@ -269,7 +269,7 @@ void replica_handshake() {
 
     // Send REPLCONF command to master
     std::string replconf_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
-    if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
+    if (send(master_fd, replconf_port_message.c_str(), replconf_port_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF port command\n";
         close(master_fd);
         return;
