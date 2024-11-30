@@ -176,46 +176,6 @@ std::string unknown_command() {
     return "-ERR unknown command\r\n";
 }
 
-void send_replconf() {
-    // Create socket to connect to the master server
-    int master_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (master_fd < 0) {
-        std::cerr << "Failed to create socket for replica to master connection\n";
-        return;
-    }
-
-    struct sockaddr_in master_addr;
-    master_addr.sin_family = AF_INET;
-    master_addr.sin_port = htons(master_port);  // Use master port
-
-    // Resolve master IP address
-    struct hostent *host = gethostbyname(master_host.c_str());
-    if (host == nullptr) {
-        std::cerr << "Failed to resolve master host\n";
-        close(master_fd);
-        return;
-    }
-    memcpy(&master_addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-
-    // Connect to the master server
-    if (connect(master_fd, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0) {
-        std::cerr << "Failed to connect to master\n";
-        close(master_fd);
-        return;
-    }
-
-    // Send REPLCONF command to master
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + std::to_string(listening_port) + "\r\n";
-    if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF command\n";
-        close(master_fd);
-        return;
-    }
-
-    // Close the socket after communication
-    close(master_fd);
-}
-
 void replica_handshake() {
     // Create socket to connect to the master server
     int master_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -267,7 +227,7 @@ void replica_handshake() {
         std::cerr << "Failed to receive response from master\n";
     }
 
-    // Send REPLCONF command to master
+    // Send REPLCONF port command to master
     std::string replconf_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n";
     if (send(master_fd, replconf_port_message.c_str(), replconf_port_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF port command\n";
@@ -275,6 +235,7 @@ void replica_handshake() {
         return;
     }
 
+    // Send REPLCONF capa command to master
     std::string replconf_capa_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
     if (send(master_fd, replconf_capa_message.c_str(), replconf_capa_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF capa command\n";
@@ -360,6 +321,9 @@ int main(int argc, char **argv) {
             std::string host_and_port = argv[++i];
             master_host = host_and_port.substr(0, host_and_port.find(" "));
             master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
+
+            std::cout << "master_host: " << master_host << std::endl;
+            std::port << "master_port: " << master_port << std::endl;
         }
     }
 
