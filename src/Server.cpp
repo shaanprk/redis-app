@@ -172,34 +172,42 @@ std::string handle_info(const std::vector<std::string> &arguments) {
 
 // Function to handle REPCLONF command
 std::string handle_repclonf(const std::vector<std::string> &arguments) {
-    if (arguments.size() < 2) {
+    if (arguments.size() < 3) {
         return "-ERR wrong number of argumetns for 'REPCLONF'\r\n";
     }
 
+    std::string subcommand = arguments[1];
+    std::string response = "+OK\r\n";
+    
     {
         std::lock_guard<std::mutex> lock(store_mutex);
 
-        // Example: REPCLONF MASTER host port
-        if (arguments[1] == "MASTER" && arguments.size() == 4) {
-            is_master = false;
-            master_host = arguments[2];
+        // Subcommand: listening-port
+        if (subcommand == "listening-port") {
             try {
-                master_port = std::stoi(arguments[3]);
+                int port = std::stoi(arguments[2]);
+                listening_port = port; // Store or handle the listening port
+                // Optionally log or apply configuration changes here
             } catch (...) {
                 return "-ERR invalid port number\r\n";
             }
-            return "+OK\r\n";
-        } 
-        // Example: REPCLONF SLAVE
-        else if (arguments[1] == "SLAVE" && arguments.size() == 2) {
-            is_master = true;
-            return "+OK\r\n";
-        } 
-        // Example: Invalid usage
+        }
+        // Subcommand: capa (capabilities)
+        else if (subcommand == "capa") {
+            std::string capability = arguments[2];
+            if (capability == "psync2") {
+                support_psync2 = true; // Enable PSYNC v2 if applicable
+            } else {
+                return "-ERR unsupported capability\r\n";
+            }
+        }
+        // Unknown subcommand
         else {
-            return "-ERR invalid repclonf usage\r\n";
+            return "-ERR unknown REPLCONF subcommand\r\n";
         }
     }
+
+    return response;
 
 }
 
