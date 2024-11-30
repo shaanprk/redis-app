@@ -307,8 +307,8 @@ int main(int argc, char **argv) {
             master_host = host_and_port.substr(0, host_and_port.find(" "));
             master_port = std::stoi(host_and_port.substr(host_and_port.find(" ") + 1, host_and_port.size()));
             // std::cout << "host_and_port: " << host_and_port << std::endl;
-            std::cout << "master_host: " << master_host << std::endl;
-            std::cout << "master_port: " << master_port << std::endl;
+            // std::cout << "master_host: " << master_host << std::endl;
+            // std::cout << "master_port: " << master_port << std::endl;
         }
     }
 
