@@ -204,20 +204,12 @@ void send_replconf() {
         return;
     }
 
-    // First REPLCONF command: REPLCONF listening-port <PORT>
-    std::string listening_port_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(listening_port).size()) + "\r\n" + std::to_string(listening_port) + "\r\n";
-    
-    if (send(master_fd, listening_port_message.c_str(), listening_port_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF listening-port command\n";
-        close(master_fd);
-        return;
-    }
+    // Construct REPLCONF command to send listening-port
+    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + std::to_string(listening_port) + "\r\n";
 
-    // Second REPLCONF command: REPLCONF capa psync2
-    std::string capa_psync2_message = "*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n";
-
-    if (send(master_fd, capa_psync2_message.c_str(), capa_psync2_message.size(), 0) < 0) {
-        std::cerr << "Failed to send REPLCONF capa psync2 command\n";
+    // Send REPLCONF command to the master
+    if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
+        std::cerr << "Failed to send REPLCONF command\n";
         close(master_fd);
         return;
     }
@@ -228,12 +220,7 @@ void send_replconf() {
     if (bytes_received > 0) {
         buffer[bytes_received] = '\0';
         std::string response(buffer);
-
-        if (response == "+OK\r\n") {
-            std::cout << "Received +OK from master for REPLCONF commands\n";
-        } else {
-            std::cerr << "Unexpected response from master: " << response << "\n";
-        }
+        std::cout << "Received response from master: " << response << "\n";
     } else {
         std::cerr << "Failed to receive response from master\n";
     }
