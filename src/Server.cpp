@@ -303,8 +303,9 @@ int main(int argc, char **argv) {
             std::cout << "port: " << port << std::endl;
         } else if (strcmp(argv[i], "--replicaof") == 0) {
             is_master = false;
-            master_host = strtok(argv[++i], " ");
-            std::cout << "master_host: " << master_host << std::endl;
+            host_and_port = argv[++i];
+            // master_host = 
+            std::cout << "master_host: " << host_and_port << std::endl;
             // master_port = std::stoi(argv[++i]);
         }
     }
