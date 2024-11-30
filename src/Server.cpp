@@ -228,7 +228,7 @@ void send_ping_to_master(const std::string &master_host, int master_port, int re
     }
 
     // Send REPLCONF listening-port <PORT>
-    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n" + std::to_string(replica_port) + "\r\n";
+    std::string replconf_message = "*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$" + std::to_string(std::to_string(replica_port).size()) + "\r\n" + std::to_string(replica_port) + "\r\n";
     if (send(master_fd, replconf_message.c_str(), replconf_message.size(), 0) < 0) {
         std::cerr << "Failed to send REPLCONF listening-port command\n";
         close(master_fd);
