@@ -179,7 +179,7 @@ std::string handle_replconf(const std::vector<std::string> &arguments) {
 
 // Function to handle PSYNC command
 std::string handle_psync(const std::vector<std::string> &arguments) {
-    std::string response = "+FULLRESYNC\r\n" + replication_id + "\r\n" + to_string(offset) + "\r\n";
+    std::string response = "+FULLRESYNC\r\n" + replication_id + "\r\n" + std::to_string(offset) + "\r\n";
     return response;
 }
 
